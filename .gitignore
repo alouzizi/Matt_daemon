@@ -1,1 +1,21 @@
 .vagrant/
+
+# Build artifacts
+MattDaemon
+Ben_AFK
+*.o
+*.a
+*.so
+
+# Log files
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
