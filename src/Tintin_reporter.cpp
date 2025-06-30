@@ -114,7 +114,6 @@ void Tintin_reporter::run() {
                         log("Client connected");
                         
                         if (!authenticateClient(client_socket)) {
-                            log("Client authentication failed");
                             active_connections.erase(
                                 std::remove(active_connections.begin(), 
                                            active_connections.end(), client_socket),
@@ -405,74 +404,56 @@ bool Tintin_reporter::authenticateClient(int client_socket) {
     }
     
     char buffer[Config::BUFFER_SIZE];
-    int attempts = 0;
-    
-    while (attempts < Config::MAX_AUTH_ATTEMPTS) {
-        std::string prompt = Config::AUTH_PROMPT;
-        std::string encrypted_prompt = Config::Crypto::encryptMessage(prompt);
-        if (send(client_socket, encrypted_prompt.c_str(), encrypted_prompt.length(), 0) < 0) {
-            logError("Failed to send authentication prompt");
-            return false;
-        }
-        
-        struct timeval timeout;
-        timeout.tv_sec = 30;
-        timeout.tv_usec = 0;
-        setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-        
-        ssize_t bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
-        
-        if (bytes_received <= 0) {
-            logError("Failed to receive password or timeout occurred");
-            return false;
-        }
-        
-        buffer[bytes_received] = '\0';
-        
-        std::string password_input(buffer);
-        std::string decrypted_password = Config::Crypto::decryptMessage(password_input);
-        
-        if (decrypted_password.empty()) {
-            decrypted_password = password_input;
-            logError("Password decryption failed, trying as plain text");
-        }
-        
-        if (!decrypted_password.empty() && decrypted_password.back() == '\n') {
-            decrypted_password.pop_back();
-        }
-        if (!decrypted_password.empty() && decrypted_password.back() == '\r') {
-            decrypted_password.pop_back();
-        }
-        
-        if (Config::Crypto::verifyPassword(decrypted_password)) {
-            std::string success_msg = Config::AUTH_SUCCESS + "\n";
-            std::string encrypted_success = Config::Crypto::encryptMessage(success_msg);
-            if (send(client_socket, encrypted_success.c_str(), encrypted_success.length(), 0) < 0) {
-                logError("Failed to send authentication success message");
-                return false;
-            }
-            usleep(10000);
-            log("Client authentication successful");
-            return true;
-        } else {
-            attempts++;
-            std::string failure_msg;
-            if (attempts < Config::MAX_AUTH_ATTEMPTS) {
-                failure_msg = Config::AUTH_FAILED + " (" + std::to_string(Config::MAX_AUTH_ATTEMPTS - attempts) + " attempts remaining)\n";
-            } else {
-                failure_msg = Config::AUTH_FAILED + " (maximum attempts exceeded)\n";
-            }
-            std::string encrypted_failure = Config::Crypto::encryptMessage(failure_msg);
-            if (send(client_socket, encrypted_failure.c_str(), encrypted_failure.length(), 0) < 0) {
-                logError("Failed to send authentication failure message");
-                return false;
-            }
-            usleep(10000);
-            log("Client authentication failed (attempt " + std::to_string(attempts) + ")");
-        }
+    std::string prompt = Config::AUTH_PROMPT;
+    std::string encrypted_prompt = Config::Crypto::encryptMessage(prompt);
+    if (send(client_socket, encrypted_prompt.c_str(), encrypted_prompt.length(), 0) < 0) {
+        logError("Failed to send authentication prompt");
+        return false;
     }
-    
-    return false;
+
+    struct timeval timeout;
+    timeout.tv_sec = 30;
+    timeout.tv_usec = 0;
+    setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+    ssize_t bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
+    if (bytes_received <= 0) {
+        logError("Failed to receive password or timeout occurred");
+        return false;
+    }
+    buffer[bytes_received] = '\0';
+
+    std::string password_input(buffer);
+    std::string decrypted_password = Config::Crypto::decryptMessage(password_input);
+    if (decrypted_password.empty()) {
+        decrypted_password = password_input;
+        logError("Password decryption failed, trying as plain text");
+    }
+    if (!decrypted_password.empty() && decrypted_password.back() == '\n') {
+        decrypted_password.pop_back();
+    }
+    if (!decrypted_password.empty() && decrypted_password.back() == '\r') {
+        decrypted_password.pop_back();
+    }
+
+    if (Config::Crypto::verifyPassword(decrypted_password)) {
+        std::string success_msg = Config::AUTH_SUCCESS + "\n";
+        std::string encrypted_success = Config::Crypto::encryptMessage(success_msg);
+        if (send(client_socket, encrypted_success.c_str(), encrypted_success.length(), 0) < 0) {
+            logError("Failed to send authentication success message");
+            return false;
+        }
+        usleep(10000);
+        log("Client authentication successful");
+        return true;
+    } else {
+        std::string failure_msg = Config::AUTH_FAILED + "\n";
+        std::string encrypted_failure = Config::Crypto::encryptMessage(failure_msg);
+        send(client_socket, encrypted_failure.c_str(), encrypted_failure.length(), 0);
+        usleep(10000);
+				log("Client disconnected due to authentication failure");
+        return false;
+    }
 }
 
 std::string Tintin_reporter::formatTimestamp(const std::chrono::system_clock::time_point& time_point) {

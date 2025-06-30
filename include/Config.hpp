@@ -56,7 +56,6 @@ Available commands:
     static const std::string AUTH_PROMPT = "Enter password: ";
     static const std::string AUTH_SUCCESS = "Authentication successful";
     static const std::string AUTH_FAILED = "Authentication failed";
-    static constexpr int MAX_AUTH_ATTEMPTS = 3;
     
     namespace Crypto {
         inline std::string xorEncrypt(const std::string& data, const std::string& key) {
