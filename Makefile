@@ -5,7 +5,7 @@ CLIENT = Ben_AFK
 SRCDIR = src
 INCDIR = include
 
-DAEMON_SOURCES = $(SRCDIR)/main.cpp $(SRCDIR)/Tintin_reporter.cpp
+DAEMON_SOURCES = $(SRCDIR)/main.cpp $(SRCDIR)/Tintin_reporter.cpp $(SRCDIR)/daemon.cpp
 DAEMON_OBJECTS = $(DAEMON_SOURCES:.cpp=.o)
 
 CLIENT_SOURCES = $(SRCDIR)/Ben_AFK.cpp
@@ -29,5 +29,11 @@ clean:
 
 fclean: clean
 	rm -f $(TARGET) $(CLIENT)
+
+kill:
+	@sudo pkill $(TARGET) || true
+
+rund:
+	@sudo ./$(TARGET)
 
 re: fclean all

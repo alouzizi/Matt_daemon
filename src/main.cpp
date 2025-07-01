@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
             }
             case 'h':
                 printUsage(argv[0]);
-                return EXIT_SUCCESS;
+                break;
             case '?':
                 std::cerr << "Error: Invalid option. Use -h or --help for usage information." << std::endl;
                 return EXIT_FAILURE;
