@@ -54,7 +54,6 @@ public:
     void setupLogging();
     
     bool setupServer();
-    void handleClient(int client_socket);
     void processCommand(const std::string& command, int client_socket);
     bool authenticateClient(int client_socket);
     

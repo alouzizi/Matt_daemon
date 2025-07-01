@@ -33,7 +33,7 @@ fclean: clean
 kill:
 	@sudo pkill $(TARGET) || true
 
-rund:
+run:
 	@sudo ./$(TARGET)
 
 re: fclean all
