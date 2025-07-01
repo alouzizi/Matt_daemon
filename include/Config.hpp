@@ -27,7 +27,7 @@ namespace Config {
         static const std::string HELP = "help";
         static const std::string UPTIME = "uptime";
     }
-    
+
     namespace Responses {
         static const std::string WELCOME = R"(Welcome to MattDaemon
 Available commands:
@@ -46,9 +46,9 @@ Available commands:
   quit     - Shutdown the daemon
 )";
     }
-    
+
     static constexpr const char* ENCRYPTION_KEY = "MattDaemon2025SecretKey";
-    static constexpr bool ENABLE_ENCRYPTION = true;
+    static constexpr bool ENABLE_ENCRYPTION =true;
     
     static constexpr bool ENABLE_AUTHENTICATION = true;
     // Password: "secure123" (encrypted with XOR)
@@ -65,21 +65,20 @@ Available commands:
             }
             return result;
         }
-        
         inline std::string xorDecrypt(const std::string& data, const std::string& key) {
             return xorEncrypt(data, key);
         }
         
         inline std::string toHex(const std::string& data) {
             std::string hex;
-            hex.reserve(data.length() * 2);
+            char buffer[3];
             for (unsigned char c : data) {
-                hex += "0123456789ABCDEF"[c >> 4];
-                hex += "0123456789ABCDEF"[c & 0x0F];
+                sprintf(buffer, "%02X", c);
+                hex += buffer;
             }
             return hex;
         }
-        
+
         inline std::string fromHex(const std::string& hex) {
             std::string data;
             data.reserve(hex.length() / 2);
